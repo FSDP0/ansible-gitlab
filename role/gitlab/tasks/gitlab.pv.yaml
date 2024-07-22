@@ -1,0 +1,180 @@
+# Data Volume 사전 설정 단계
+- name: "[ STEP 2 ] # 1. ===== Prerequisites ====="
+  block:
+    - name: "[ STEP 2 ] #1-1. Check target node data volume already exist (Redis)"
+      block:
+        # GitLab 데이터 폴더 존재 여부 확인 (Redis)
+        - name: "[ STEP 2 ] # 1-1-1. Check gitlab data volume already exist (Redis)"
+          stat:
+            path: "{{GITLAB_PERSISTENT_ROOT_STORAGE_MOUNT_PATH}}"
+          register: gitlab_data_volume_status
+        
+        # GitLab 데이터 폴더가 존재하며 데이터 초기화를 진행하는 경우, 폴더 삭제 (Redis)
+        - name: "[ STEP 2 ] # 1-1-1. Remove gitlab data volume root directory (Redis)"
+          file:
+            path: "{{GITLAB_PERSISTENT_ROOT_STORAGE_MOUNT_PATH}}"
+            state: absent
+          when: 
+            - gitlab_data_volume_status.stat.exists
+            - not GITLAB_PERSISTENT_EXIST
+      when: ansible_nodename == GITLAB_PERSISTENT_REDIS_STORAGE_NODE_AFFINITY_VALUE
+
+    - name: "[ STEP 2 ] #1-2. Check target node data volume already exist (Gitaly)"
+      block:
+        # GitLab 데이터 폴더 존재 여부 확인 (Gitaly)
+        - name: "[ STEP 2 ] # 1-2-1. Check gitlab data volume already exist (Gitaly)"
+          stat:
+            path: "{{GITLAB_PERSISTENT_ROOT_STORAGE_MOUNT_PATH}}"
+          register: gitlab_data_volume_status
+
+        # GitLab 데이터 폴더가 존재하며 데이터 초기화를 진행하는 경우, 폴더 삭제 (Gitaly)
+        - name: "[ STEP 2 ] # 1-2-2. Remove gitlab data volume root directory (Gitaly)"
+          file:
+            path: "{{GITLAB_PERSISTENT_ROOT_STORAGE_MOUNT_PATH}}"
+            state: absent
+          when: 
+            - gitlab_data_volume_status.stat.exists
+            - not GITLAB_PERSISTENT_EXIST
+      when: ansible_nodename == GITLAB_PERSISTENT_GITALY_STORAGE_NODE_AFFINITY_VALUE
+
+    - name: "[ STEP 2 ] #1-3. Check target node data volume already exist (Postgresql)"
+      block:
+        # GitLab 데이터 폴더 존재 여부 확인 (Postgresql)
+        - name: "[ STEP 2 ] # 1-3-1. Check gitlab data volume already exist (Postgresql)"
+          stat:
+            path: "{{GITLAB_PERSISTENT_ROOT_STORAGE_MOUNT_PATH}}"
+          register: gitlab_data_volume_status
+
+        # GitLab 데이터 폴더가 존재하며 데이터 초기화를 진행하는 경우, 폴더 삭제 (Postgresql)
+        - name: "[ STEP 2 ] # 1-3-2. Remove gitlab data volume root directory (Postgresql)"
+          file:
+            path: "{{GITLAB_PERSISTENT_ROOT_STORAGE_MOUNT_PATH}}"
+            state: absent
+          when: 
+            - gitlab_data_volume_status.stat.exists
+            - not GITLAB_PERSISTENT_EXIST
+      when: ansible_nodename == GITLAB_PERSISTENT_POSTGRESQL_STORAGE_NODE_AFFINITY_VALUE
+
+    - name: "[ STEP 2 ] #1-4. Check target node data volume already exist (MinIO)"
+      block:
+        # GitLab 데이터 폴더 존재 여부 확인 (MinIO)
+        - name: "[ STEP 2 ] # 1-4-1. Check gitlab data volume already exist (MinIO)"
+          stat:
+            path: "{{GITLAB_PERSISTENT_ROOT_STORAGE_MOUNT_PATH}}"
+          register: gitlab_data_volume_status
+
+        # GitLab 데이터 폴더가 존재하며 데이터 초기화를 진행하는 경우, 폴더 삭제 (MinIO)
+        - name: "[ STEP 2 ] # 1-4-2. Remove gitlab data volume root directory (MinIO)"
+          file:
+            path: "{{GITLAB_PERSISTENT_ROOT_STORAGE_MOUNT_PATH}}"
+            state: absent
+          when: 
+            - gitlab_data_volume_status.stat.exists
+            - not GITLAB_PERSISTENT_EXIST
+      when: ansible_nodename == GITLAB_PERSISTENT_MINIO_STORAGE_NODE_AFFINITY_VALUE
+  always:
+    # GitLab 데이터 폴더 생성
+    - name: "[ STEP 2 ] # 1-5. Create gitlab data volume root directory (All Target Node)"
+      file:
+        path: "{{GITLAB_PERSISTENT_ROOT_STORAGE_MOUNT_PATH}}"
+        state: directory
+  become: true
+
+# GitLab 구성 데이터 폴더 생성
+- name: "[ STEP 2 ] # 2. ===== Create gitlab data volumes ====="
+  block:
+    # Redis 폴더 생성 처리
+    - name: "[ STEP 2 ] # 2-1. Create `Redis` persistent data volume (GitLab Job Data)"
+      block:
+        # Redis 폴더 생성
+        - name: "[ STEP 2 ] # 2-1-1. Create `Redis` persistent data volume"
+          file:
+            path: "{{GITLAB_PERSISTENT_REDIS_STORAGE_MOUNT_PATH}}/redis"
+            state: directory
+
+        # Redis 폴더 권한 부여
+        - name: "[ STEP 2 ] # 2-1-2. Grant permission of `Redis` data volume"
+          become: true
+          shell: chown -R 1001 {{GITLAB_PERSISTENT_REDIS_STORAGE_MOUNT_PATH}}/redis
+      
+      # Redis 폴더 삭제
+      rescue:
+        - name: "[ STEP 2 ] # 2-1. ***** ERROR OCCURED : Remove `Redis` data diectory *****"
+          file:
+            path: "{{GITLAB_PERSISTENT_REDIS_STORAGE_MOUNT_PATH}}"
+            state: absent
+            
+      become: true
+      when: ansible_nodename == GITLAB_PERSISTENT_REDIS_STORAGE_NODE_AFFINITY_VALUE
+
+    # Gitaly 폴더 생성 처리
+    - name: "[ STEP 2 ] # 2-2. Create `Gitaly` persistent data volume (GitLab Repository Data)"
+      block:
+        # Gitaly 폴더 생성 (새폴더)
+        - name: "[ STEP 2 ] # 2-2-1. Create `Gitlay` persistent data volume"
+          file:
+            path: "{{GITLAB_PERSISTENT_GITALY_STORAGE_MOUNT_PATH}}/gitaly"
+            state: directory
+      
+        # Gitaly 폴더 권한 부여
+        - name: "[ STEP 2 ] # 2-2-3. Grant permission of `Gitaly` data volume"
+          become: true
+          shell: chown -R 1000 {{GITLAB_PERSISTENT_GITALY_STORAGE_MOUNT_PATH}}/gitaly
+
+      # Gitaly 폴더 삭제
+      rescue:
+        - name: "[ STEP 2 ] # 2-2. ***** ERROR OCCURED : Remove `Gitaly` data diectory *****"
+          file:
+            path: "{{GITLAB_PERSISTENT_GITALY_STORAGE_MOUNT_PATH}}"
+            state: absent
+
+      become: true
+      when: ansible_nodename == GITLAB_PERSISTENT_GITALY_STORAGE_NODE_AFFINITY_VALUE
+
+    # Postgresql 폴더 생성 처리
+    - name: "[ STEP 2 ] # 2-3. Create `PostgreSQL` persistent data volume (GitLab Database Data)"
+      block:
+        # Postgresql 폴더 생성 (새폴더)
+        - name: "[ STEP 2 ] # 2-3-1. Create `PostgreSQL` persistent data volume"
+          file:
+            path: "{{GITLAB_PERSISTENT_POSTGRESQL_STORAGE_MOUNT_PATH}}/postgresql"
+            state: directory
+          
+        # Postgresql 폴더 권한 부여
+        - name: "[ STEP 2 ] # 2-3-3. Grant permission of `Postgresql` data volume"
+          shell: chown -R 1001 {{GITLAB_PERSISTENT_MINIO_STORAGE_MOUNT_PATH}}/postgresql
+
+      # Postgresql 폴더 삭제
+      rescue:
+        - name: "[ STEP 2 ] # 2-3. ***** ERROR OCCURED : Remove `PostgreSQL` data diectory *****"
+          file:
+            path: "{{GITLAB_PERSISTENT_POSTGRESQL_STORAGE_MOUNT_PATH}}"
+            state: absent
+
+      become: true
+      when: ansible_nodename == GITLAB_PERSISTENT_POSTGRESQL_STORAGE_NODE_AFFINITY_VALUE
+
+    # MinIO 폴더 생성 처리
+    - name: "[ STEP 2 ] # 2-4. Create `MinIO` persistent data volume (GitLab Object Storage Data)"
+      block:
+        # MinIO 폴더 생성
+        - name: "[ STEP 2 ] # 2-4-1. Create `MinIO` persistent data volume"
+          file:
+            path: "{{GITLAB_PERSISTENT_MINIO_STORAGE_MOUNT_PATH}}/minio"
+            state: directory
+
+        # MinIO 폴더 권한 부여
+        - name: "[ STEP 2 ] # 2-4-2. Grant permission of `MinIO` data volume"
+          shell: chown -R 1000 {{GITLAB_PERSISTENT_MINIO_STORAGE_MOUNT_PATH}}/minio
+
+      rescue:
+        # MinIO 폴더 삭제
+        - name: "[ STEP 2 ] # 2-4. ***** ERROR OCCURED : Remove `MinIO` data diectory *****"
+          file:
+            path: "{{GITLAB_PERSISTENT_MINIO_STORAGE_MOUNT_PATH}}"
+            state: absent
+
+      become: true
+      when: ansible_nodename == GITLAB_PERSISTENT_MINIO_STORAGE_NODE_AFFINITY_VALUE
+
+  when: not GITLAB_PERSISTENT_EXIST

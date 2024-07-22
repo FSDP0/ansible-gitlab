@@ -1,0 +1,108 @@
+# Redis PV
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{GITLAB_PERSISTENT_REDIS_STORAGE_NAME}}
+  labels:
+    release: {{GITLAB_METADATA_RELEASE_LABEL}}
+    app.kubernetes.io/instance: {{GITLAB_METADATA_RELEASE_LABEL}}
+spec:
+  storageClassName: {{GITLAB_PERSISTENT_REDIS_STORAGE_CLASS_NAME}}
+  capacity:
+    storage: {{GITLAB_PERSISTENT_REDIS_STORAGE_SIZE | default(GITLAB_DEFAULT_PERSISTENT_REDIS_STORAGE_SIZE, true)}}
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: {{GITLAB_PERSISTENT_REDIS_STORAGE_MOUNT_PATH | default(GITLAB_DEFAULT_PERSISTENT_REDIS_STORAGE_MOUNT_PATH, true) ~ '/redis'}}
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+          - { 
+              key: {{GITLAB_PERSISTENT_REDIS_STORAGE_NODE_AFFINITY_KEY}}, 
+              operator: In, 
+              values: [{{GITLAB_PERSISTENT_REDIS_STORAGE_NODE_AFFINITY_VALUE}}]
+            }
+# Gitaly PV
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{GITLAB_PERSISTENT_GITALY_STORAGE_NAME}}
+  labels:
+    release: {{GITLAB_METADATA_RELEASE_LABEL}}
+    app.kubernetes.io/instance: {{GITLAB_METADATA_RELEASE_LABEL}}
+spec:
+  storageClassName: {{GITLAB_PERSISTENT_GITALY_STORAGE_CLASS_NAME}}
+  capacity:
+    storage: {{GITLAB_PERSISTENT_GITALY_STORAGE_SIZE | default(GITLAB_DEFAULT_PERSISTENT_GITALY_STORAGE_SIZE, true)}}
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: {{GITLAB_PERSISTENT_GITALY_STORAGE_MOUNT_PATH | default(GITLAB_DEFAULT_PERSISTENT_GITALY_STORAGE_MOUNT_PATH, true) ~ '/gitaly'}}
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - { 
+            key: {{GITLAB_PERSISTENT_GITALY_STORAGE_NODE_AFFINITY_KEY}}, 
+            operator: In, 
+            values: [{{GITLAB_PERSISTENT_GITALY_STORAGE_NODE_AFFINITY_VALUE}}]
+          }
+# Postgresql PV
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{GITLAB_PERSISTENT_POSTGRESQL_STORAGE_NAME}}
+  labels:
+    release: {{GITLAB_METADATA_RELEASE_LABEL}}
+    app.kubernetes.io/instance: {{GITLAB_METADATA_RELEASE_LABEL}}
+spec:
+  storageClassName: {{GITLAB_PERSISTENT_POSTGRESQL_STORAGE_CLASS_NAME}}
+  capacity:
+    storage: {{GITLAB_PERSISTENT_POSTGRESQL_STORAGE_SIZE | default(GITLAB_DEFAULT_PERSISTENT_POSTGRESQL_STORAGE_SIZE, true)}}
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: {{GITLAB_PERSISTENT_POSTGRESQL_STORAGE_MOUNT_PATH | default(GITLAB_DEFAULT_PERSISTENT_POSTGRESQL_STORAGE_MOUNT_PATH, true) ~ '/postgresql'}}
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - { 
+            key: {{GITLAB_PERSISTENT_POSTGRESQL_STORAGE_NODE_AFFINITY_KEY}}, 
+            operator: In, 
+            values: [{{GITLAB_PERSISTENT_POSTGRESQL_STORAGE_NODE_AFFINITY_VALUE}}]
+          }
+# MinIO PV
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{GITLAB_PERSISTENT_MINIO_STORAGE_NAME}}
+  labels:
+    release: {{GITLAB_METADATA_RELEASE_LABEL}}
+    app.kubernetes.io/instance: {{GITLAB_METADATA_RELEASE_LABEL}}
+spec:
+  storageClassName: {{GITLAB_PERSISTENT_MINIO_STORAGE_CLASS_NAME}}
+  capacity:
+    storage: {{GITLAB_PERSISTENT_MINIO_STORAGE_SIZE | default(GITLAB_DEFAULT_PERSISTENT_MINIO_STORAGE_SIZE, true)}}
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: {{GITLAB_PERSISTENT_MINIO_STORAGE_MOUNT_PATH | default(GITLAB_DEFAULT_PERSISTENT_MINIO_STORAGE_MOUNT_PATH, true) ~ '/minio'}}
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - { 
+            key: {{GITLAB_PERSISTENT_MINIO_STORAGE_NODE_AFFINITY_KEY}}, 
+            operator: In, 
+            values: [{{GITLAB_PERSISTENT_MINIO_STORAGE_NODE_AFFINITY_VALUE}}]
+          }

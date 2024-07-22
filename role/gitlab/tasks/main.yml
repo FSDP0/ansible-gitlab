@@ -1,0 +1,47 @@
+- name: "STEP 1. GitLab Chart Setting"
+  delegate_to: localhost
+  run_once: true
+  import_tasks: gitlab.setting.yml
+  poll: 10
+  tags:
+    - gitlab
+    - setting
+
+- name: "STEP 2. GitLab PV Setting"
+  import_tasks: gitlab.pv.yaml
+  poll: 10
+  tags:
+    - gitlab
+    - pv
+  when: | 
+    ansible_nodename == GITLAB_PERSISTENT_REDIS_STORAGE_NODE_AFFINITY_VALUE
+    or ansible_nodename == GITLAB_PERSISTENT_GITALY_STORAGE_NODE_AFFINITY_VALUE
+    or ansible_nodename == GITLAB_PERSISTENT_POSTGRESQL_STORAGE_NODE_AFFINITY_VALUE
+    or ansible_nodename == GITLAB_PERSISTENT_MINIO_STORAGE_NODE_AFFINITY_VALUE
+
+- name: "STEP 3. GitLab Chart Deployment"
+  delegate_to: localhost
+  import_tasks: gitlab.deploy.yml
+  run_once: true
+  poll: 10
+  tags:
+    - gitlab
+    - deploy
+
+- name: "STEP 4. Initialize Setting GitLab"
+  delegate_to: localhost
+  run_once: true
+  import_tasks: gitlab.config.yml
+  poll: 10
+  tags:
+    - gitlab
+    - config
+
+- name: "ETC. GitLab Uninstall"
+  delegate_to: localhost
+  run_once: true
+  import_tasks: gitlab.uninstall.yml
+  poll: 10
+  tags:
+    - uninstall-gitlab
+  when: "'uninstall-gitlab' in ansible_run_tags"
